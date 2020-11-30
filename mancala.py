@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import random
 import sys
 from time import time
 import multiprocessing
@@ -267,22 +268,39 @@ def run_game(initial_board=None, player_starts=True):
             break
 
 
+def random_board_initialise(board_len=14, num_pips=48):
+    b = Board()
+
+    num_pips = random.randint(0, num_pips)
+
+    board_list = [0 for _ in range(board_len)]
+    for _ in range(num_pips):
+        board_list[random.randint(0, board_len-1)] += 1
+
+    b.board = board_list
+    return Board(b)
+
+
+def get_best_move(board):
+    if not board.no_more_moves():
+        move = board.find_best_move()[0][1]
+        if move > 0:
+            return move
+    return None
+
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Mancala AI")
-    parser.add_argument(
-        "-b",
-        "--board",
-        type=int,
-        nargs=14,
-        default=None,
-        help="Board layout, e.g 0 4 4 4 4 4 4 0 4 4 4 4 4 4",
-    )
-    parser.add_argument("-d", "--depth", type=int, default=5)
-    parser.add_argument("-o", "--opponent-starts", default=False, action="store_true")
-    parser.add_argument("--dont-score-one", default=False, action="store_true")
-    args = parser.parse_args()
-
-    DEPTH = args.depth
-    DONT_SCORE_ONE = args.dont_score_one
-
-    run_game(args.board, not args.opponent_starts)
+    num_iters = 20000
+    t0 = time()
+    for i in range(num_iters):
+        b = random_board_initialise()
+        best_move = get_best_move(b)
+        print("random board is...", b)
+        print("best move is...", best_move)
+        if best_move is not None:
+            with open('x.txt', 'a') as f:
+                print(b.board, file=f)
+            with open('y.txt', 'a') as f:
+                print(best_move, file=f)
+    tf = time()
+    print("took ", tf-t0, "seconds to generate", num_iters, "simulations")
