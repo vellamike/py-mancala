@@ -26,7 +26,8 @@ class Net(nn.Module):
         self.fc1 = nn.Linear(14, 512)
         self.fc2 = nn.Linear(512, 1024)
         self.fc3 = nn.Linear(1024, 512)
-        self.fc4 = nn.Linear(512, max(y) + 1)
+        self.fc4 = nn.Linear(512, 256)
+        self.fc5 = nn.Linear(256, max(y) + 1)
 
     def forward(self, x):
         x = self.fc1(x)
@@ -36,6 +37,8 @@ class Net(nn.Module):
         x = self.fc3(x)
         x = F.relu(x)
         x = self.fc4(x)
+        x = F.relu(x)
+        x = self.fc5(x)
         output = F.log_softmax(x, dim=1)
         return output
 
@@ -47,8 +50,10 @@ device = torch.device("cuda" if use_cuda else "cpu")
 model = Net().to(device)
 optimizer = optim.Adadelta(model.parameters())
 
-train_dataset = TensorDataset(Tensor(x[:-500]), LongTensor(y[:-500]))  # create your datset
-test_dataset = TensorDataset(Tensor(x[-500:]), LongTensor(y[-500:]))  # create your datset
+test_set_size = 1000
+
+train_dataset = TensorDataset(Tensor(x[:-test_set_size]), LongTensor(y[:-test_set_size]))  # create your datset
+test_dataset = TensorDataset(Tensor(x[-test_set_size:]), LongTensor(y[-test_set_size:]))  # create your datset
 
 train_loader = DataLoader(train_dataset, batch_size=32)  # create your dataloader
 test_loader = DataLoader(test_dataset, batch_size=1)  # create your dataloader
@@ -68,8 +73,8 @@ def train():
                 print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     epoch, batch_idx * len(data), len(train_loader.dataset),
                     100. * batch_idx / len(train_loader), loss.item()))
-                test(model, device, test_loader)
-                model.train()
+        test(model, device, test_loader)
+        model.train()
 
 
 
@@ -83,9 +88,11 @@ def test(model, device, test_loader):
             output = model(data)
             test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
             pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
-            #print("prediction: ", pred)
+            #import pdb
+            #pdb.set_trace()
             correct += pred.eq(target.view_as(pred)).sum().item()
-        test_loss /= len(test_loader.dataset)
+            #print("Target: ", target, "output: ", output.argmax(dim=1, keepdim=True), target == output.argmax(dim=1, keepdim=True))
+    test_loss /= len(test_loader.dataset)
 
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
         test_loss, correct, len(test_loader.dataset),

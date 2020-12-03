@@ -271,7 +271,7 @@ def run_game(initial_board=None, player_starts=True):
 def random_board_initialise(board_len=14, num_pips=48):
     b = Board()
 
-    num_pips = random.randint(0, num_pips)
+    #num_pips = random.randint(0, num_pips)
 
     board_list = [0 for _ in range(board_len)]
     for _ in range(num_pips):
@@ -283,7 +283,7 @@ def random_board_initialise(board_len=14, num_pips=48):
 
 def get_best_move(board):
     if not board.no_more_moves():
-        move = board.find_best_move()[0][1]
+        move = board.find_best_move()[0][0][0]  # For now let's just focus on one-movers
         if move > 0:
             return move
     return None
